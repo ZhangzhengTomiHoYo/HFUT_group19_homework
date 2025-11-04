@@ -1,199 +1,77 @@
-<img src="docs/gifs/high_res_2t.gif" alt="high resolution (0.1 degree) temperature at 2m predictions gif" width="150px">&nbsp;&nbsp;&nbsp;<img src="docs/gifs/no2.gif" alt="nitrogen dioxide predictions gif" width="150px">&nbsp;&nbsp;&nbsp;<img src="docs/gifs/wave_direction.gif" alt="ocean wave direction predictions gif" width="150px">&nbsp;&nbsp;&nbsp;<img src="docs/gifs/tc_tracks.gif" alt="tropical cyclone track predictions gif" width="220px">
-
-# Aurora: A Foundation Model for the Earth System
-
-[![CI](https://github.com/microsoft/Aurora/actions/workflows/ci.yaml/badge.svg)](https://github.com/microsoft/Aurora/actions/workflows/ci.yaml)
-[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://microsoft.github.io/aurora)
-[![Paper](https://img.shields.io/badge/arXiv-2405.13063-blue)](https://arxiv.org/abs/2405.13063)
-[![DOI](https://zenodo.org/badge/828987595.svg)](https://doi.org/10.5281/zenodo.14983583)
-
-Implementation of the Aurora model for Earth system forecasting.
-
-[Link to the paper.](https://www.nature.com/articles/s41586-025-09005-y)
-
-[Please see the documentation for detailed instructions and more examples.](https://microsoft.github.io/aurora)
-You can also directly go to [a full-fledged example that runs the model on ERA5](https://microsoft.github.io/aurora/example_era5.html).
-
-Cite us as follows:
-
-```
-@article{bodnar2025aurora,
-    title = {A Foundation Model for the Earth System},
-    author = {Cristian Bodnar and Wessel P. Bruinsma and Ana Lucic and Megan Stanley and Anna Allen and Johannes Brandstetter and Patrick Garvan and Maik Riechert and Jonathan A. Weyn and Haiyu Dong and Jayesh K. Gupta and Kit Thambiratnam and Alexander T. Archibald and Chun-Chieh Wu and Elizabeth Heider and Max Welling and Richard E. Turner and Paris Perdikaris},
-    journal = {Nature},
-    year = {2025},
-    month = {May},
-    day = {21},
-    issn = {1476-4687},
-    doi = {10.1038/s41586-025-09005-y},
-    url = {https://doi.org/10.1038/s41586-025-09005-y},
-}
-```
-
-Contents:
-
-- [What is Aurora?](#what-is-aurora)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
-- [License](#license)
-- [Security](#security)
-- [Responsible AI Transparency Documentation](#responsible-ai-transparency-documentation)
-- [Trademarks](#trademarks)
-- [FAQ](#faq)
-
-Please email [AIWeatherClimate@microsoft.com](mailto:AIWeatherClimate@microsoft.com)
-if you are interested in using Aurora for commercial applications.
-For research-related questions or technical support with the code here,
-please [open an issue](https://github.com/microsoft/aurora/issues/new/choose)
-or reach out to the authors of the paper.
-
-## What is Aurora?
-
-Aurora is a machine learning model that can predict atmospheric variables, such as temperature.
-It is a _foundation model_, which means that it was first generally trained on a lot of data,
-and then can be adapted to specialised atmospheric forecasting tasks with relatively little data.
-We provide four such specialised versions:
-one for medium-resolution weather prediction,
-one for high-resolution weather prediction,
-one for air pollution prediction,
-and one for ocean wave prediction.
-
-## Getting Started
-
-Install with `pip`:
-
-```bash
-pip install microsoft-aurora
-```
-
-Or with `conda` / `mamba`:
-
-```bash
-mamba install microsoft-aurora -c conda-forge
-```
-
-Run the pretrained small model on random data:
-
-```python
-from datetime import datetime
-
-import torch
-
-from aurora import AuroraSmallPretrained, Batch, Metadata
-
-model = AuroraSmallPretrained()
-model.load_checkpoint()
-
-batch = Batch(
-    surf_vars={k: torch.randn(1, 2, 17, 32) for k in ("2t", "10u", "10v", "msl")},
-    static_vars={k: torch.randn(17, 32) for k in ("lsm", "z", "slt")},
-    atmos_vars={k: torch.randn(1, 2, 4, 17, 32) for k in ("z", "u", "v", "t", "q")},
-    metadata=Metadata(
-        lat=torch.linspace(90, -90, 17),
-        lon=torch.linspace(0, 360, 32 + 1)[:-1],
-        time=(datetime(2020, 6, 1, 12, 0),),
-        atmos_levels=(100, 250, 500, 850),
-    ),
-)
-
-prediction = model.forward(batch)
-
-print(prediction.surf_vars["2t"])
-```
-
-Note that this will incur a 500 MB download.
-
-Please read the [documentation](https://microsoft.github.io/aurora) for more detailed instructions and for which models are available.
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-## License
-
-See [`LICENSE.txt`](LICENSE.txt).
-
-## Security
-
-See [`SECURITY.md`](SECURITY.md).
-
-## Responsible AI Transparency Documentation
-
-An AI system includes not only the technology, but also the people who will use it, the people who will be affected by it, and the environment in which it is deployed.
-Creating a system that is fit for its intended purpose requires an understanding of how the technology works, its capabilities and limitations, and how to achieve the best performance.
-Microsoft has a broad effort to put our AI principles into practice.
-To find out more, see [Responsible AI principles from Microsoft](https://www.microsoft.com/en-us/ai/responsible-ai).
-
-### Use of this code
-Our goal in publishing this code is
-(1) to facilitate reproducibility of our paper and
-(2) to support and accelerate further research into foundation model for atmospheric forecasting.
-This code has not been developed nor tested for non-academic purposes and hence should only be used as such completely at your own risk.
-
-### Limitations
-Although Aurora was trained to accurately predict future weather, air pollution, and ocean waves,
-Aurora is based on neural networks, which means that there are no strict guarantees that predictions will always be accurate.
-Altering the inputs, providing a sample that was not in the training set,
-or even providing a sample that was in the training set but is simply unlucky may result in arbitrarily poor predictions.
-In addition, even though Aurora was trained on a wide variety of data sets,
-it is possible that Aurora inherits biases present in any one of those data sets.
-A forecasting system like Aurora is only one piece of the puzzle in a weather prediction pipeline,
-and its outputs are not meant to be directly used by people or businesses to plan their operations.
-A series of additional verification tests are needed before it can become operationally useful.
-
-In addition to the above, the models published here are streamlined versions of the models
-originally developed internally.
-Whereas we tried to be as thorough as possible, it is possible that the models published here
-deviate from the original model in subtle, unintended ways.
-This may affect predictive performance.
-
-### Data
-The models included in the code have been trained on a variety of publicly available data.
-A description of all data, including download links, can be found in [Supplementary C of the paper](https://arxiv.org/pdf/2405.13063).
-The checkpoints include data from
-ERA5, CMIP6 (CMCC-CM2-VHR4 and ECMWF-IFS-HR), HRES forecasts, GFS T0, GFS forecasts,
-HRES T0,
-HRES analysis,
-HRES-WAM analysis,
-CAMS reanalysis, and CAMS analysis.
-
-### Evaluations
-All versions of Aurora were extensively evaluated by evaluating predictions on data not seen during training.
-These evaluations not only compare measures of accuracy, such as the root mean square error and anomaly correlation coefficient,
-but also look at the behaviour in extreme situations, like extreme heat and cold, and rare events, like Storm Ciarán in 2023.
-These evaluations are the main topic of [the paper](https://arxiv.org/pdf/2405.13063).
-
-*Note: The documentation included in this file is for informational purposes only and is not intended to supersede the applicable license terms.*
-
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services.
-Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
-
-## FAQ
-
-### How do I setup the repo for local development?
-
-First, install the repository in editable mode and setup `pre-commit`:
-
-```bash
-make install
-```
-
-To run the tests and print coverage, run
-
-```bash
-make test
-```
-
-You can then explore the coverage in the browser by opening `htmlcov/index.html`.
-
-To locally build the documentation, run
-
-```bash
-make docs
-```
-
-To locally view the documentation, open `docs/_build/index.html` in your browser.
+1. 项目介绍
+合肥工业大学研究生二年级深度学习课程编程作业，第19组作业。
+本项目基于ERA5 再分析数据和Microsoft Aurora 预训练模型，实现对合肥蜀山区的气象变量预测。核心预测变量包括：
+近地表变量：2m 温度、10m 风场（u/v 分量）、平均海平面气压
+大气垂直变量：多气压层（50~1000hPa）温度、风场、比湿、位势
+预测时间逻辑：输入 2023 年 1 月 1 日 00:00/06:00 的 ERA5 数据，通过 Aurora 模型滚动预测（2 步），输出当日 12:00/18:00 的气象结果，并可视化 2m 温度对比。
+2. 环境准备
+2.1 基础环境要求
+Python 3.8~3.11（推荐 3.10，避免版本兼容问题）
+内存 ≥ 16GB（若使用 GPU，显存 ≥ 8GB）
+网络连接（用于下载 ERA5 数据和 Aurora 预训练权重）
+2.2 依赖包安装
+打开终端，执行以下命令安装所有必需依赖：
+bash
+# 核心依赖（CDS数据下载、模型、数据处理、可视化）
+pip install cdsapi matplotlib torch==2.1.0 xarray netCDF4
+# Aurora模型（需从官方源安装，确保版本匹配）
+pip install git+https://github.com/microsoft/aurora.git@main
+2.3 CDS 账户配置（关键步骤）
+ERA5 数据需从Copernicus Climate Data Store（CDS） 下载，需提前注册并配置 API：
+注册 CDS 账户：访问CDS 官网，完成注册（免费）。
+获取 API 密钥：登录后，进入用户设置页，复制页面中的 “API key”（格式如：12345:abcdef12-3456-7890-abcd-ef1234567890）。
+创建配置文件：
+Windows：在C:\Users\你的用户名\.cdsapirc创建文件。
+Linux/Mac：在~/.cdsapirc创建文件。
+文件内容（替换<API key>为你的密钥）：
+plaintext
+url: https://cds.climate.copernicus.eu/api/v2
+key: <API key>
+接受 ERA5 使用条款：访问ERA5 单层级数据集页和ERA5 气压层数据集页，点击 “Accept Terms”（不接受无法下载数据）。
+3. 代码使用步骤
+3.1 调整配置参数（可选）
+打开Hefei_Shushan_Aurora_Pred.py，根据需求修改以下参数：
+SHUSHAN_AREA：蜀山区经纬度范围（默认已覆盖完整区域，无需修改）。
+DOWNLOAD_PATH：数据下载路径（默认~/downloads/era5_shushan，可自定义）。
+INPUT_YEAR/MONTH/DAY：输入数据日期（默认 2023-01-01，需保持年月日一致性）。
+ROLLOUT_STEPS：预测步数（默认 2 步→12:00/18:00，每步 6 小时）。
+RUN_ON_FOUNDRY：是否使用 Azure 云运行（默认 False，本地运行）。
+3.2 运行代码
+在终端进入代码所在目录，执行：
+bash
+python Hefei_Shushan_Aurora_Pred.py
+3.3 输出文件
+运行完成后，在DOWNLOAD_PATH目录下生成 3 类文件：
+数据文件：static.nc（静态变量）、2023-01-01-surface-level.nc（地表变量）、2023-01-01-atmospheric.nc（大气变量）。
+可视化结果：shushan_aurora_prediction.png（2m 温度预测对比图）。
+4. 关键模块说明
+模块	功能描述
+数据下载（CDS API）	筛选蜀山区范围的 ERA5 数据，避免下载全球数据（节省时间和磁盘空间）。
+Batch 准备	将 ERA5 的 netCDF 数据转换为 Aurora 模型所需的 Tensor 格式，添加 batch 维度。
+模型加载与预测	本地加载预训练 Aurora 模型（非 LoRA 版本），支持 GPU 加速，执行滚动预测。
+可视化	对比展示 2m 温度预测结果与 ERA5 输入参考，使用coolwarm色表直观呈现温度分布。
+5. 常见问题解决
+5.1 CDS API 下载报错
+错误 1：Permission denied: 403 → 未接受 ERA5 数据集的使用条款，需前往 CDS 数据集页点击 “Accept Terms”。
+错误 2：API key not found → .cdsapirc文件路径或内容错误，检查文件位置和 key 格式。
+错误 3：Connection timeout → 网络不稳定，可重试或使用代理（需在.cdsapirc中添加proxy: http://代理地址:端口）。
+5.2 模型权重下载失败
+问题：load_checkpoint时报错 “无法连接 microsoft/aurora” → 网络问题或 GitHub 访问受限。
+解决：手动下载权重文件（aurora-0.25-pretrained.ckpt），并修改代码中load_checkpoint路径为本地路径：
+python
+运行
+model.load_checkpoint("本地权重文件路径/aurora-0.25-pretrained.ckpt")
+5.3 GPU 内存不足
+问题：CUDA out of memory → GPU 显存不足。
+解决：
+改用 CPU 运行（代码会自动检测，无需修改）。
+减小预测区域（调整SHUSHAN_AREA范围，仅保留核心区域）。
+降低ROLLOUT_STEPS（减少预测步数）。
+6. 注意事项
+数据版权：ERA5 数据属于 Copernicus Climate Change Service（C3S），仅可用于非商业研究，需遵守CDS 数据使用政策。
+模型适用范围：Aurora 模型预训练版本适用于全球 0.25° 分辨率，本项目通过区域筛选适配蜀山区，预测精度受输入数据和模型本身限制，仅供参考。
+时间一致性：输入数据的year/month/day需保持一致，否则会导致 xarray 读取变量时维度不匹配。
+7. 扩展建议
+预测变量扩展：在surf_vars和atmos_vars中添加更多变量（如降水量、云量），需先在 CDS 下载请求中添加对应变量名（参考ERA5 变量列表）。
+时间序列预测：修改INPUT_TIMES为更长的时间序列（如 1 天内的所有 6 小时间隔），增加ROLLOUT_STEPS实现多日预测。
+结果量化分析：添加 RMSE、MAE 等指标计算，对比预测结果与 ERA5 后续时间点的观测数据（需下载对应时间的 ERA5 数据）
